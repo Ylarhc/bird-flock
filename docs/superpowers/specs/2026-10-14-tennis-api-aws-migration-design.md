@@ -214,7 +214,7 @@ pattern (today's `jest.global-setup.js` runs `prisma db push` against
 in a second place:
 
 - `jest.global-setup.js` starts a Floci container
-  (`ghcr.io/floci-io/floci`), then runs `terraform apply` against it
+  (`floci/floci`), then runs `terraform apply` against it
   (endpoint override + dummy credentials, a separate local state dir,
   e.g. `terraform/.test-state`) using the real `terraform/dynamodb.tf`
   — so the table schema tests run against is exactly the schema that

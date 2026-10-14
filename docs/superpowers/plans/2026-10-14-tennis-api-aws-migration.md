@@ -666,7 +666,7 @@ module.exports = async () => {
   } catch {
     // no previous container, fine
   }
-  execSync("docker run -d --name tennis-api-floci-test -p 4566:4566 ghcr.io/floci-io/floci", {
+  execSync("docker run -d --name tennis-api-floci-test -p 4566:4566 floci/floci", {
     stdio: "inherit",
   });
 
