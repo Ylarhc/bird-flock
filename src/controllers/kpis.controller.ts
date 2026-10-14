@@ -15,3 +15,12 @@ export async function medianHeight(_req: Request, res: Response): Promise<void> 
   const result = await kpisService.getMedianHeight();
   res.status(200).json({ result });
 }
+
+export async function all(_req: Request, res: Response): Promise<void> {
+  const [bestCountry, averageBmi, medianHeight] = await Promise.all([
+    kpisService.getBestCountry(),
+    kpisService.getAverageBmi(),
+    kpisService.getMedianHeight(),
+  ]);
+  res.status(200).json({ bestCountry, averageBmi, medianHeight });
+}
