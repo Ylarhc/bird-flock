@@ -53,12 +53,17 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "local" {
+    path = "terraform.tfstate"
+  }
 }
 
 provider "aws" {
   region = var.aws_region
 }
 ```
+
+(The `backend "local"` block makes the state file path explicit and overridable via `-backend-config` at init time — needed so Task 5's test harness can point Terraform at an isolated test state file without the unsupported `-state` flag.)
 
 - [ ] **Step 2: Write `terraform/variables.tf`**
 
@@ -139,15 +144,26 @@ output "table_arn" {
 }
 ```
 
-- [ ] **Step 5: Validate**
+- [ ] **Step 5: Add Terraform artifacts to `.gitignore`**
+
+Append to the repo root `.gitignore` (create the file if the lines below aren't already covered):
+
+```
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/build/
+tests/.terraform-test-state/
+```
+
+- [ ] **Step 6: Validate**
 
 Run: `cd terraform && terraform init -input=false -backend=false && terraform validate`
 Expected: `Success! The configuration is valid.`
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add terraform/provider.tf terraform/variables.tf terraform/dynamodb.tf terraform/outputs.tf
+git add terraform/provider.tf terraform/variables.tf terraform/dynamodb.tf terraform/outputs.tf .gitignore
 git commit -m "Add Terraform DynamoDB table and GSIs for tennis API"
 ```
 
@@ -656,24 +672,26 @@ module.exports = async () => {
 
   await waitForPort("localhost", 4566, 30000);
 
+  const tfEnv = {
+    ...process.env,
+    AWS_ENDPOINT_URL_DYNAMODB: "http://localhost:4566",
+    AWS_ACCESS_KEY_ID: "test",
+    AWS_SECRET_ACCESS_KEY: "test",
+    AWS_REGION: "us-east-1",
+  };
+
   execSync(
-    "terraform init -input=false -backend=false && " +
-      "terraform apply -auto-approve -input=false -target=aws_dynamodb_table.players " +
-      "-state=../tests/.terraform-test-state/terraform.tfstate",
-    {
-      cwd: "terraform",
-      stdio: "inherit",
-      env: {
-        ...process.env,
-        AWS_ENDPOINT_URL_DYNAMODB: "http://localhost:4566",
-        AWS_ACCESS_KEY_ID: "test",
-        AWS_SECRET_ACCESS_KEY: "test",
-        AWS_REGION: "us-east-1",
-      },
-    }
+    'terraform init -input=false -reconfigure -backend-config="path=../tests/.terraform-test-state/terraform.tfstate"',
+    { cwd: "terraform", stdio: "inherit", env: tfEnv }
+  );
+  execSync(
+    "terraform apply -auto-approve -input=false -target=aws_dynamodb_table.players",
+    { cwd: "terraform", stdio: "inherit", env: tfEnv }
   );
 };
 ```
+
+(`-backend-config`/`-reconfigure` overrides the local backend's `path` from `provider.tf`'s `backend "local" { path = "terraform.tfstate" }` without the unsupported legacy `-state` flag, and without prompting to migrate state between the real and test paths.)
 
 - [ ] **Step 3: Write `tests/jest.global-teardown.js`**
 
@@ -1700,6 +1718,7 @@ git commit -m "Add KPI Lambda handlers"
 
 **Files:**
 - Create: `scripts/prepare-lambda-package.js`
+- Create: `tsconfig.build.json`
 - Modify: `package.json` (new `build`/`package` scripts, remove Prisma deps/scripts, remove `supertest`)
 - Modify: `tsconfig.json` (drop `prisma` from `include`, add `seed`)
 - Delete: `src/app.ts`, `src/server.ts`, `src/routes/`, `src/controllers/`, `src/middleware/`, `src/mappers/player.mapper.ts`, `src/lib/prisma.ts`
@@ -1726,13 +1745,28 @@ fs.copyFileSync(path.join(root, "package-lock.json"), path.join(dist, "package-l
 execSync("npm ci --omit=dev", { cwd: dist, stdio: "inherit" });
 ```
 
-- [ ] **Step 2: Update `package.json` scripts and dependencies**
+- [ ] **Step 2: Write `tsconfig.build.json`**
+
+`tsc`'s main `tsconfig.json` has `rootDir: "."` and includes `src`, `seed`, and `tests` together (needed so `tsc --noEmit` and ts-jest type-check everything) — compiling with it directly would emit `dist/src/handlers/...` and pull `seed/`/`tests/` into the Lambda zip, which doesn't match Terraform's `handlers/players/list.handler`-style paths. The production build uses a separate config scoped to `src/` only:
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+```
+
+- [ ] **Step 3: Update `package.json` scripts and dependencies**
 
 Remove scripts: `prisma:migrate`, `prisma:generate`, `db:seed` (replace with the line below). Remove dependencies: `@prisma/adapter-better-sqlite3`, `@prisma/client`, `better-sqlite3`. Remove devDependencies: `prisma`, `supertest`, `@types/supertest`. Remove the top-level `"prisma": { "seed": ... }` block. Add:
 
 ```json
 "scripts": {
-  "build": "tsc && node scripts/prepare-lambda-package.js",
+  "build": "tsc -p tsconfig.build.json && node scripts/prepare-lambda-package.js",
   "start": "echo 'No long-running server in the Lambda deployment — see terraform/outputs.tf for the API endpoint after deploy' && exit 1",
   "test": "jest",
   "db:seed": "ts-node seed/seed.ts"
@@ -1743,7 +1777,7 @@ Remove scripts: `prisma:migrate`, `prisma:generate`, `db:seed` (replace with the
 
 Run: `npm install` after editing `package.json` to refresh `package-lock.json`.
 
-- [ ] **Step 3: Update `tsconfig.json`**
+- [ ] **Step 4: Update `tsconfig.json`**
 
 ```json
 {
@@ -1764,14 +1798,14 @@ Run: `npm install` after editing `package.json` to refresh `package-lock.json`.
 }
 ```
 
-- [ ] **Step 4: Update `.env` and `.env.example`**
+- [ ] **Step 5: Update `.env` and `.env.example`**
 
 ```
 TABLE_NAME="Players"
 AWS_REGION="us-east-1"
 ```
 
-- [ ] **Step 5: Delete the old Express/Prisma stack**
+- [ ] **Step 6: Delete the old Express/Prisma stack**
 
 ```bash
 git rm -r src/app.ts src/server.ts src/routes src/controllers src/middleware src/mappers/player.mapper.ts src/lib/prisma.ts
@@ -1779,26 +1813,26 @@ git rm -r prisma prisma.config.ts dev.db
 git rm tests/players.routes.test.ts tests/kpis.routes.test.ts tests/error-handler.test.ts tests/health.test.ts tests/prisma-schema.test.ts tests/player.mapper.test.ts
 ```
 
-- [ ] **Step 6: Remove the Prisma `db push` line from `tests/jest.global-setup.js`**
+- [ ] **Step 7: Remove the Prisma `db push` line from `tests/jest.global-setup.js`**
 
 Delete the `execSync("npx prisma db push ...")` block added in Task 5 Step 2 — it has no file left to push against.
 
-- [ ] **Step 7: Run the full test suite**
+- [ ] **Step 8: Run the full test suite**
 
 Run: `npm test`
 Expected: PASS — every test file under `tests/` (`http.test.ts`, `player-item.test.ts`, `players.service.test.ts`, `kpis.service.test.ts`, `seed.test.ts`, `players.handlers.test.ts`, `kpis.handlers.test.ts`) passes, no references to removed modules remain.
 
-- [ ] **Step 8: Type-check the whole project**
+- [ ] **Step 9: Type-check the whole project**
 
 Run: `npx tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 9: Build and validate the Lambda package end-to-end against Terraform (no apply)**
+- [ ] **Step 10: Build and validate the Lambda package end-to-end against Terraform (no apply)**
 
 Run: `npm run build && cd terraform && terraform init -input=false -backend=false && terraform validate && terraform plan -input=false`
 Expected: `terraform validate` succeeds; `terraform plan` succeeds in producing a plan (it will prompt for/require real AWS credentials to actually reach AWS for resource diffing — if none are configured in this environment, a credentials error here is expected and acceptable; the goal of this step is confirming the config + built zip are structurally consistent, not performing a real plan against AWS).
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
 git add -A
