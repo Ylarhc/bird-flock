@@ -37,7 +37,7 @@ export async function createPlayer(input: Player): Promise<Player> {
     }
     throw err;
   }
-  return input;
+  return fromItem(toItem(input));
 }
 
 export async function updatePlayer(id: number, input: Player): Promise<Player> {
@@ -56,7 +56,7 @@ export async function updatePlayer(id: number, input: Player): Promise<Player> {
     }
     throw err;
   }
-  return updated;
+  return fromItem(toItem(updated));
 }
 
 export async function deletePlayer(id: number): Promise<void> {

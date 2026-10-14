@@ -15,3 +15,9 @@ variable "lambda_runtime" {
   type        = string
   default     = "nodejs20.x"
 }
+
+variable "skip_aws_validation" {
+  description = "Skip AWS credential/account validation calls — set true only when applying against a local emulator (e.g. the test harness), never for a real deploy"
+  type        = bool
+  default     = false
+}
