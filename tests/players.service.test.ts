@@ -1,4 +1,4 @@
-import { prisma } from "../src/lib/prisma";
+import { clearTable } from "./helpers/dynamodb-test-helpers";
 import * as playersService from "../src/services/players.service";
 import { NotFoundError, ConflictError } from "../src/errors";
 import type { Player } from "../src/types/player";
@@ -16,11 +16,7 @@ const fixture: Player = {
 
 describe("players.service", () => {
   beforeEach(async () => {
-    await prisma.player.deleteMany();
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
+    await clearTable();
   });
 
   it("creates and lists a player", async () => {
@@ -63,5 +59,13 @@ describe("players.service", () => {
 
   it("throws NotFoundError when deleting a missing id", async () => {
     await expect(playersService.deletePlayer(999)).rejects.toThrow(NotFoundError);
+  });
+
+  it("propagates a non-conditional DynamoDB error as a plain error, not NotFound/Conflict", async () => {
+    const { dynamoDb } = await import("../src/lib/dynamodb");
+    const { GetCommand } = await import("@aws-sdk/lib-dynamodb");
+    await expect(
+      dynamoDb.send(new GetCommand({ TableName: "DoesNotExist", Key: { id: 1 } }))
+    ).rejects.not.toBeInstanceOf(NotFoundError);
   });
 });
