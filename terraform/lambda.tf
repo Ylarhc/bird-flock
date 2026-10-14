@@ -1,14 +1,14 @@
 locals {
   routes = {
-    list_players       = { method = "GET",    path = "/players",            handler = "handlers/players/list.handler" }
-    get_player         = { method = "GET",    path = "/players/{id}",       handler = "handlers/players/get.handler" }
-    create_player      = { method = "POST",   path = "/players",            handler = "handlers/players/create.handler" }
-    update_player      = { method = "PUT",    path = "/players/{id}",       handler = "handlers/players/update.handler" }
-    delete_player      = { method = "DELETE", path = "/players/{id}",       handler = "handlers/players/remove.handler" }
-    kpis_all           = { method = "GET",    path = "/kpis",               handler = "handlers/kpis/all.handler" }
-    kpi_best_country   = { method = "GET",    path = "/kpis/best-country",  handler = "handlers/kpis/bestCountry.handler" }
-    kpi_average_bmi    = { method = "GET",    path = "/kpis/average-bmi",   handler = "handlers/kpis/averageBmi.handler" }
-    kpi_median_height  = { method = "GET",    path = "/kpis/median-height", handler = "handlers/kpis/medianHeight.handler" }
+    list_players      = { method = "GET", path = "/players", handler = "handlers/players/list.handler" }
+    get_player        = { method = "GET", path = "/players/{id}", handler = "handlers/players/get.handler" }
+    create_player     = { method = "POST", path = "/players", handler = "handlers/players/create.handler" }
+    update_player     = { method = "PUT", path = "/players/{id}", handler = "handlers/players/update.handler" }
+    delete_player     = { method = "DELETE", path = "/players/{id}", handler = "handlers/players/remove.handler" }
+    kpis_all          = { method = "GET", path = "/kpis", handler = "handlers/kpis/all.handler" }
+    kpi_best_country  = { method = "GET", path = "/kpis/best-country", handler = "handlers/kpis/bestCountry.handler" }
+    kpi_average_bmi   = { method = "GET", path = "/kpis/average-bmi", handler = "handlers/kpis/averageBmi.handler" }
+    kpi_median_height = { method = "GET", path = "/kpis/median-height", handler = "handlers/kpis/medianHeight.handler" }
   }
 }
 

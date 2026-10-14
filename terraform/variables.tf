@@ -13,7 +13,7 @@ variable "table_name" {
 variable "lambda_runtime" {
   description = "Lambda Node.js runtime"
   type        = string
-  default     = "nodejs20.x"
+  default     = "nodejs22.x"
 }
 
 variable "skip_aws_validation" {

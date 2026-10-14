@@ -15,6 +15,7 @@ export async function seedDatabase(jsonPath: string): Promise<void> {
   }
 
   for (const batch of batches) {
+    // shortcut: UnprocessedItems not retried; fine for this 5-item one-time seed, add retry/backoff if dataset or throttling risk grows
     await dynamoDb.send(
       new BatchWriteCommand({
         RequestItems: {

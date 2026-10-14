@@ -44,6 +44,7 @@ module.exports = async () => {
     AWS_SECRET_ACCESS_KEY: "test",
     AWS_REGION: "us-east-1",
     TF_VAR_skip_aws_validation: "true",
+    TF_DATA_DIR: "../tests/.terraform-test-state/.terraform",
   };
 
   execSync(

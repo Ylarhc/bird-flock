@@ -63,9 +63,20 @@ describe("players.service", () => {
 
   it("propagates a non-conditional DynamoDB error as a plain error, not NotFound/Conflict", async () => {
     const { dynamoDb } = await import("../src/lib/dynamodb");
-    const { GetCommand } = await import("@aws-sdk/lib-dynamodb");
-    await expect(
-      dynamoDb.send(new GetCommand({ TableName: "DoesNotExist", Key: { id: 1 } }))
-    ).rejects.not.toBeInstanceOf(NotFoundError);
+    const sendSpy = jest
+      .spyOn(dynamoDb, "send")
+      .mockImplementationOnce(() => Promise.reject(new Error("boom")));
+    let caught: unknown;
+    try {
+      await playersService.deletePlayer(1);
+    } catch (err) {
+      caught = err;
+    } finally {
+      sendSpy.mockRestore();
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect((caught as Error).message).toBe("boom");
+    expect(caught).not.toBeInstanceOf(NotFoundError);
+    expect(caught).not.toBeInstanceOf(ConflictError);
   });
 });

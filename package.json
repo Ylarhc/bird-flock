@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node scripts/prepare-lambda-package.js",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && node scripts/prepare-lambda-package.js",
     "start": "echo 'No long-running server in the Lambda deployment — see terraform/outputs.tf for the API endpoint after deploy' && exit 1",
     "test": "jest",
     "db:seed": "ts-node seed/seed.ts"

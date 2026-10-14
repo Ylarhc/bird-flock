@@ -24,10 +24,10 @@ resource "aws_dynamodb_table" "players" {
   }
 
   global_secondary_index {
-    name            = "CountryIndex"
-    hash_key        = "countryCode"
-    range_key       = "id"
-    projection_type = "INCLUDE"
+    name               = "CountryIndex"
+    hash_key           = "countryCode"
+    range_key          = "id"
+    projection_type    = "INCLUDE"
     non_key_attributes = ["data"]
   }
 
