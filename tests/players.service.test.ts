@@ -61,6 +61,15 @@ describe("players.service", () => {
     await expect(playersService.deletePlayer(999)).rejects.toThrow(NotFoundError);
   });
 
+  it("lists players sorted by most wins in `data.last` first", async () => {
+    const worst: Player = { ...fixture, id: 2, data: { ...fixture.data, last: [0, 0, 1] } };
+    const best: Player = { ...fixture, id: 3, data: { ...fixture.data, last: [1, 1, 1] } };
+    const middle: Player = { ...fixture, id: 4, data: { ...fixture.data, last: [1, 0, 1] } };
+    await playersService.putManyPlayers([worst, best, middle]);
+    const players = await playersService.listPlayers();
+    expect(players.map((p) => p.id)).toEqual([3, 4, 2]);
+  });
+
   it("putManyPlayers writes multiple players in one call", async () => {
     const other: Player = { ...fixture, id: 2, firstname: "Other" };
     await playersService.putManyPlayers([fixture, other]);

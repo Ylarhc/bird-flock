@@ -5,6 +5,10 @@ import { toItem, fromItem, PlayerItem } from "../lib/player-item";
 import { NotFoundError, ConflictError } from "../errors";
 import type { Player } from "../types/player";
 
+function winCount(player: Player): number {
+  return player.data.last.filter((result) => result === 1).length;
+}
+
 export async function listPlayers(): Promise<Player[]> {
   const items: PlayerItem[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
@@ -13,7 +17,7 @@ export async function listPlayers(): Promise<Player[]> {
     items.push(...((res.Items as PlayerItem[] | undefined) ?? []));
     ExclusiveStartKey = res.LastEvaluatedKey;
   } while (ExclusiveStartKey);
-  return items.map(fromItem);
+  return items.map(fromItem).sort((a, b) => winCount(b) - winCount(a));
 }
 
 export async function getPlayer(id: number): Promise<Player> {

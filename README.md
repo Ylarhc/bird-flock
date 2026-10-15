@@ -37,7 +37,7 @@ separate from the real deploy state under `terraform/`.
 
 ## Endpoints
 
-- `GET /players`            — list all players
+- `GET /players`            — list all players, sorted by most match wins (`data.last`) first
 - `GET /players/:id`        — get one player
 - `POST /players`           — create a player
 - `PUT /players/:id`        — update a player
