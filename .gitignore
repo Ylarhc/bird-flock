@@ -6,6 +6,8 @@ dist/
 terraform/.terraform/
 terraform/*.tfstate*
 terraform/build/
+terraform/override.tf
 tests/.terraform-test-state/
 .local-dev-state/
 tests/.e2e-state/
+node_modules
