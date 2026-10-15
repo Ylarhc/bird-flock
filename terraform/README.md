@@ -98,9 +98,12 @@ The resulting policy, saved as `deploy-policy.json`:
     {
       "Effect": "Allow",
       "Action": [
-        "lambda:AddPermission", "lambda:CreateFunction", "lambda:GetFunction", "lambda:GetFunctionCodeSigningConfig",
-        "lambda:GetFunctionConcurrency", "lambda:GetLayerVersion", "lambda:GetPolicy", "lambda:ListVersionsByFunction",
-        "lambda:PassCapacityProvider", "lambda:PutFunctionConcurrency"
+        "lambda:AddPermission", "lambda:CreateFunction", "lambda:DeleteFunctionCodeSigningConfig",
+        "lambda:DeleteFunctionConcurrency", "lambda:GetFunction", "lambda:GetFunctionCodeSigningConfig",
+        "lambda:GetFunctionConcurrency", "lambda:GetFunctionConfiguration", "lambda:GetLayerVersion",
+        "lambda:GetPolicy", "lambda:ListVersionsByFunction", "lambda:PassCapacityProvider",
+        "lambda:PublishVersion", "lambda:PutFunctionCodeSigningConfig", "lambda:PutFunctionConcurrency",
+        "lambda:UpdateFunctionCode", "lambda:UpdateFunctionConfiguration"
       ],
       "Resource": [
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:capacity-provider:*",
@@ -112,6 +115,7 @@ The resulting policy, saved as `deploy-policy.json`:
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:tennis-api-kpi-median-height",
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:tennis-api-kpis-all",
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:tennis-api-list-players",
+        "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:tennis-api-reset",
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:tennis-api-update-player",
         "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:layer:*:*"
       ]
@@ -188,7 +192,13 @@ With that in place, plain `terraform plan` / `terraform apply` use the
 
 - This policy covers only the resources in today's plan. Adding new Terraform
   resources later will likely need the policy extended — regenerate via step 1
-  against the new plan and merge in any new statements.
+  against the new plan, then merge the new resource ARNs/actions into the
+  existing statements (a `terraform plan` diff only lists *changed* resources,
+  so Autopilot's output on a later run is a partial patch, not a full
+  replacement). Publish the merged document as a new managed-policy version:
+  `aws iam create-policy-version --policy-arn <policy-arn> --policy-document file://deploy-policy.json --set-as-default`
+  (IAM keeps at most 5 versions — delete the oldest with
+  `aws iam delete-policy-version` if you hit that limit).
 - `apigateway:*` and the `lambda:*Tags` actions use `Resource: "*"` — Autopilot
   couldn't derive narrower ARNs for those API calls. Fine for a single API;
   revisit if this user is ever reused across multiple APIs.
