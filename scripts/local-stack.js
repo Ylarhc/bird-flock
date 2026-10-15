@@ -50,11 +50,8 @@ function waitForPort(host, port, timeoutMs) {
 }
 
 function ensureBuilt() {
-  const builtHandler = path.join(REPO_ROOT, "dist", "handlers", "players", "list.js");
-  if (!fs.existsSync(builtHandler)) {
-    console.log("dist/ missing, building...");
-    execSync("npm run build", { stdio: "inherit", cwd: REPO_ROOT });
-  }
+  console.log("Building...");
+  execSync("npm run build", { stdio: "inherit", cwd: REPO_ROOT });
 }
 
 function startFloci() {
@@ -161,6 +158,10 @@ async function main() {
 
   // mode === "test-e2e": always tear down the container, pass or fail —
   // wrap everything from here on so a failed deploy doesn't leak it.
+  // Also wipe any prior Terraform state so every run applies from scratch
+  // against the fresh Floci container started above, rather than
+  // refreshing-then-recreating against stale state.
+  fs.rmSync(path.join(REPO_ROOT, "tests", ".e2e-state"), { recursive: true, force: true });
   let exitCode = 1;
   try {
     await waitForPort("localhost", 4566, 30000);
