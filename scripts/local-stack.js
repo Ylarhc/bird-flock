@@ -143,11 +143,13 @@ function seed() {
 async function main() {
   ensureBuilt();
   startFloci();
-  await waitForPort("localhost", 4566, 30000);
-  const tfOutputs = terraformApply();
-  const apiUrl = resolveApiUrl(tfOutputs);
 
   if (MODE === "dev") {
+    // Dev mode leaves the container running on failure too, so the
+    // developer can inspect it to debug — no try/finally teardown here.
+    await waitForPort("localhost", 4566, 30000);
+    const tfOutputs = terraformApply();
+    const apiUrl = resolveApiUrl(tfOutputs);
     seed();
     console.log(`\nLocal API ready: ${apiUrl}`);
     console.log("Try:");
@@ -157,14 +159,22 @@ async function main() {
     return;
   }
 
-  // mode === "test-e2e": hand off to Jest, always tear down afterward.
+  // mode === "test-e2e": always tear down the container, pass or fail —
+  // wrap everything from here on so a failed deploy doesn't leak it.
   let exitCode = 1;
   try {
+    await waitForPort("localhost", 4566, 30000);
+    const tfOutputs = terraformApply();
+    const apiUrl = resolveApiUrl(tfOutputs);
     const result = spawnSync("npx", ["jest", "-c", "jest.e2e.config.js"], {
       stdio: "inherit",
       cwd: REPO_ROOT,
+      shell: true, // npx resolves to npx.cmd on Windows; needs a shell to exec
       env: { ...process.env, E2E_API_BASE_URL: apiUrl },
     });
+    if (result.error) {
+      console.error("Failed to spawn Jest:", result.error);
+    }
     exitCode = result.status ?? 1;
   } finally {
     stopFloci();
