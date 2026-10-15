@@ -46,3 +46,4 @@ separate from the real deploy state under `terraform/`.
 - `GET /kpis/average-bmi`   — average BMI across all players
 - `GET /kpis/median-height` — median player height
 - `GET /kpis`               — retrieve all kpis
+- `POST /reset`             — clear the Players table and reload the seed data

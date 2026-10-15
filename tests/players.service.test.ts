@@ -61,6 +61,21 @@ describe("players.service", () => {
     await expect(playersService.deletePlayer(999)).rejects.toThrow(NotFoundError);
   });
 
+  it("putManyPlayers writes multiple players in one call", async () => {
+    const other: Player = { ...fixture, id: 2, firstname: "Other" };
+    await playersService.putManyPlayers([fixture, other]);
+    const players = await playersService.listPlayers();
+    expect(players).toHaveLength(2);
+  });
+
+  it("clearPlayers removes all players, including when the table is already empty", async () => {
+    await playersService.createPlayer(fixture);
+    await playersService.clearPlayers();
+    expect(await playersService.listPlayers()).toEqual([]);
+    await playersService.clearPlayers();
+    expect(await playersService.listPlayers()).toEqual([]);
+  });
+
   it("propagates a non-conditional DynamoDB error as a plain error, not NotFound/Conflict", async () => {
     const { dynamoDb } = await import("../src/lib/dynamodb");
     const sendSpy = jest

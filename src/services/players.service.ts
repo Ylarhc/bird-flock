@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, DeleteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, DeleteCommand, ScanCommand, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { dynamoDb, TABLE_NAME } from "../lib/dynamodb";
 import { toItem, fromItem, PlayerItem } from "../lib/player-item";
@@ -73,5 +73,40 @@ export async function deletePlayer(id: number): Promise<void> {
       throw new NotFoundError(`player ${id} not found`);
     }
     throw err;
+  }
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const batches: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    batches.push(items.slice(i, i + size));
+  }
+  return batches;
+}
+
+export async function putManyPlayers(players: Player[]): Promise<void> {
+  for (const batch of chunk(players, 25)) {
+    // shortcut: UnprocessedItems not retried; fine for this small dataset, add retry/backoff if it grows
+    await dynamoDb.send(
+      new BatchWriteCommand({
+        RequestItems: {
+          [TABLE_NAME]: batch.map((player) => ({ PutRequest: { Item: toItem(player) } })),
+        },
+      })
+    );
+  }
+}
+
+export async function clearPlayers(): Promise<void> {
+  const res = await dynamoDb.send(new ScanCommand({ TableName: TABLE_NAME, ProjectionExpression: "id" }));
+  const ids = res.Items ?? [];
+  for (const batch of chunk(ids, 25)) {
+    await dynamoDb.send(
+      new BatchWriteCommand({
+        RequestItems: {
+          [TABLE_NAME]: batch.map((item) => ({ DeleteRequest: { Key: { id: item.id } } })),
+        },
+      })
+    );
   }
 }

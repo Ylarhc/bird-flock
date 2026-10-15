@@ -9,6 +9,7 @@ locals {
     kpi_best_country  = { method = "GET", path = "/kpis/best-country", handler = "handlers/kpis/bestCountry.handler" }
     kpi_average_bmi   = { method = "GET", path = "/kpis/average-bmi", handler = "handlers/kpis/averageBmi.handler" }
     kpi_median_height = { method = "GET", path = "/kpis/median-height", handler = "handlers/kpis/medianHeight.handler" }
+    reset             = { method = "POST", path = "/reset", handler = "handlers/reset.handler" }
   }
 }
 
