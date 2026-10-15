@@ -7,3 +7,5 @@ terraform/.terraform/
 terraform/*.tfstate*
 terraform/build/
 tests/.terraform-test-state/
+.local-dev-state/
+tests/.e2e-state/
