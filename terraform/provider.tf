@@ -1,0 +1,23 @@
+terraform {
+  required_version = ">= 1.5"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
+  }
+  backend "local" {
+    path = "terraform.tfstate"
+  }
+}
+
+provider "aws" {
+  region                      = var.aws_region
+  skip_credentials_validation = var.skip_aws_validation
+  skip_requesting_account_id  = var.skip_aws_validation
+  skip_metadata_api_check     = var.skip_aws_validation
+}

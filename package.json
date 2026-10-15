@@ -1,0 +1,29 @@
+{
+  "name": "tennis-headtohead-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && node scripts/prepare-lambda-package.js",
+    "start": "echo 'No long-running server in the Lambda deployment — see terraform/outputs.tf for the API endpoint after deploy' && exit 1",
+    "test": "jest",
+    "test:e2e": "node scripts/local-stack.js --mode=test-e2e",
+    "dev:local": "node scripts/local-stack.js --mode=dev",
+    "dev:local:stop": "docker rm -f tennis-api-floci-dev",
+    "db:seed": "ts-node seed/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1151.0",
+    "@aws-sdk/lib-dynamodb": "^3.1151.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.164",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.5",
+    "dotenv": "^18.0.7",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
